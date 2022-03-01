@@ -1,0 +1,32 @@
+[tool.poetry]
+name = "pyrami"
+version = "0.1.0"
+description = ""
+authors = ["cookieshake <cookieshake.dev@gmail.com>"]
+
+[[tool.poetry.source]]
+name = "kakao"
+url = "http://mirror.kakao.com/pypi/simple/"
+default = true
+
+[tool.poetry.dependencies]
+python = "^3.9"
+httpx = "^0.22.0"
+anyio = "^3.5.0"
+dynaconf = "^3.1.7"
+zstandard = "^0.17.0"
+queuelib = "^1.6.2"
+boto3 = "^1.21.0"
+msgpack = "^1.0.3"
+loguru = "^0.6.0"
+fastcounter = "^1.1.0"
+redis = "^4.1.4"
+aiokafka = "^0.7.2"
+
+[tool.poetry.dev-dependencies]
+pytest = "^7.0.1"
+moto = {extras = ["kinesis"], version = "^3.0.4"}
+
+[build-system]
+requires = ["poetry-core>=1.0.0"]
+build-backend = "poetry.core.masonry.api"

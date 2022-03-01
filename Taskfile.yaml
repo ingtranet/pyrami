@@ -1,0 +1,20 @@
+# https://taskfile.dev
+
+version: '3'
+
+vars:
+  IMAGE: cookieshake/pyrami
+
+tasks:
+  default:
+    deps: [build]
+
+  build:
+    cmds:
+      - docker build --platform linux/amd64 -t {{.IMAGE}}:latest .
+  
+  push:
+    deps: [build]
+    cmds:
+      - docker push {{.IMAGE}}:latest 
+
