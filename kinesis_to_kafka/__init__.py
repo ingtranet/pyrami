@@ -21,12 +21,13 @@ class Config:
     KAFKA_BOOTSTRAP_SERVERS: str
     LOG_LEVEL: str = 'INFO'
     COMMIT_FOR_EVERY: int = 128
+    FROM_EARLIEST: str = 'false'
 
 
 class StreamWorker:
     def __init__(self, config: Config) -> None:
         self.config = config
-        self.kinesis_client = KinesisConsumer(config.STREAM_NAME, config.CONSUMER_NAME, config.REDIS_URL)
+        self.kinesis_client = KinesisConsumer(config.STREAM_NAME, config.CONSUMER_NAME, config.REDIS_URL, limit=2048, from_earliest=(config.FROM_EARLIEST == 'true'))
         self.kafka_producer = AIOKafkaProducer(
             bootstrap_servers=config.KAFKA_BOOTSTRAP_SERVERS,
             compression_type='gzip'
@@ -61,8 +62,6 @@ async def run_async(config: Config):
         tg.start_soon(signal_handler, tg.cancel_scope)
         tg.start_soon(metrics_printer)
         tg.start_soon(stream_worker.run)
-
-
 
 
 def run(settings: dict):

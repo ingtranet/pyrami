@@ -51,12 +51,13 @@ class ShardIteratorType(Enum):
 
 
 class KinesisConsumer:
-    def __init__(self, stream_name: str, consumer_name: str, redis_url: str, limit: int = 128, interval: int = 3) -> None:
+    def __init__(self, stream_name: str, consumer_name: str, redis_url: str, limit: int = 1024, interval: int = 1, from_earliest=False) -> None:
         logger.info(f'Initializing KinesisConsumer with stream_name={stream_name}')
         self.stream_name = stream_name
         self.consumer_name = consumer_name
         self.limit = limit
         self.interval = interval
+        self.from_earliest = from_earliest
         self.client = boto3.client('kinesis')
         r_host, r_port = redis_url.split(':')
         self.redis_client = Redis(host=r_host, port=r_port)
@@ -126,7 +127,10 @@ class KinesisConsumer:
                 iterator = await self.get_shard_iterator_async(sid, ShardIteratorType.AFTER_SEQUENCE_NUMBER, mark)
             else:
                 logger.debug(f'Acquiring shard iterator for {sid} from beginning')
-                iterator = await self.get_shard_iterator_async(sid, ShardIteratorType.TRIM_HORIZON)
+                if self.from_earliest:
+                    iterator = await self.get_shard_iterator_async(sid, ShardIteratorType.TRIM_HORIZON)
+                else:
+                    iterator = await self.get_shard_iterator_async(sid, ShardIteratorType.LATEST)
             shard_iters.append(iterator)
 
         async with anyio.create_task_group() as tg:
