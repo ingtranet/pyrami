@@ -95,12 +95,17 @@ class KafkaPublishWorker:
         )
 
     async def run(self, scope: anyio.CancelScope):
+        await self.kafka_producer.start()
         with anyio.CancelScope(shield=True):
             while (not scope.cancel_called) or (not self.queue.empty()):
+                data = None
                 with anyio.move_on_after(1):
                     data = await self.queue.pop()
-                    self.kafka_producer.send(self.config.KAFKA_TOPIC, data)
-                    metric_inc('kafka_publish')
+                if not data:
+                    continue
+                await self.kafka_producer.send(self.config.KAFKA_TOPIC, data)
+                metric_inc('kafka_publish')
+            await self.kafka_producer.stop()
         logger.info('PublishWorker stopped')
 
 async def async_run(config: Config):
@@ -124,6 +129,7 @@ def run(settings: dict):
     config = Config(**settings)
     logger.remove()
     logger.add(sys.stderr, level=config.LOG_LEVEL)    
+    logger.info(settings)
     anyio.run(async_run, config, backend_options={'use_uvloop': False})
  
 
