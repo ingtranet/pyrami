@@ -5,15 +5,14 @@ ADD https://github.com/krallin/tini/releases/download/${TINI_VERSION}/tini /tini
 RUN chmod +x /tini
 ENTRYPOINT ["/tini", "--", "/app/entrypoint.sh"]
 
-RUN curl -sSL https://raw.githubusercontent.com/python-poetry/poetry/master/get-poetry.py | python -
-ENV PATH "${PATH}:/root/.poetry/bin"
+RUN curl -sSL https://install.python-poetry.org | python3 -
 
 WORKDIR /app
 
 COPY pyproject.toml .
 COPY poetry.lock .
 
-RUN poetry install
+RUN $HOME/.local/bin/poetry install
 
 COPY . .
 

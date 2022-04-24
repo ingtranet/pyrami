@@ -1,4 +1,3 @@
 #!/bin/bash
 
-source $HOME/.poetry/env
-exec poetry run python /app/main.py
+exec $HOME/.local/bin/poetry run python /app/main.py
