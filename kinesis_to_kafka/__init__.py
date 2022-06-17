@@ -20,7 +20,7 @@ class Config:
     REDIS_URL: str
     KAFKA_BOOTSTRAP_SERVERS: str
     LOG_LEVEL: str = 'INFO'
-    COMMIT_FOR_EVERY: int = 128
+    COMMIT_FOR_EVERY: int = 1024
     FROM_EARLIEST: str = 'false'
 
 
