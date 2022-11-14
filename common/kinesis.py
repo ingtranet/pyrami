@@ -98,22 +98,28 @@ class KinesisConsumer:
 
     async def read_shard(self, shard_id: str, shard_iterator: str, tg: TaskGroup):
         while True:
-            response = await self.get_records_async(shard_iterator)
-            for record in response['Records']:
-                record['ShardId'] = shard_id
-                await self.send_stream.send(record)
-            if next_iter := response.get('NextShardIterator'):
-                logger.debug(f'Next iterator exists. Sleeping for {self.interval} seconds...')
-                shard_iterator = next_iter
-                await anyio.sleep(self.interval)
-            elif child_shards := response.get('ChildShards'):
-                shard_ids = [shard['ShardId'] for shard in child_shards]
-                logger.debug(f'New child shards exists. Spawning readers for {shard_ids}')
-                shard_iters = [await self.get_shard_iterator_async(sid, ShardIteratorType.TRIM_HORIZON) for sid in shard_ids]
-                for sit in shard_iters:
-                    tg.start_soon(self.read_shard, sit)
-            else:
-                break
+            try:
+                response = await self.get_records_async(shard_iterator)
+                for record in response['Records']:
+                    record['ShardId'] = shard_id
+                    await self.send_stream.send(record)
+
+                if next_iter := response.get('NextShardIterator'):
+                    logger.debug(f'Next iterator exists. Sleeping for {self.interval} seconds...')
+                    shard_iterator = next_iter
+                    await anyio.sleep(self.interval)
+                elif child_shards := response.get('ChildShards'):
+                    shard_ids = [shard['ShardId'] for shard in child_shards]
+                    logger.debug(f'New child shards exists. Spawning readers for {shard_ids}')
+                    shard_iters = [await self.get_shard_iterator_async(sid, ShardIteratorType.TRIM_HORIZON) for sid in shard_ids]
+                    for sit in shard_iters:
+                        tg.start_soon(self.read_shard, sit)
+                elif len(response['Records']) == 0:
+                    logger.debug(f'Record Not exists. Sleeping for {self.interval} seconds...')
+                    await anyio.sleep(self.interval)
+            except Exception as e:
+                logger.error(f'Error while reading shard: {e}')
+                tg.cancel_scope.cancel()
 
     async def get_iterator(self):
         shard_ids = await self.get_shard_ids_async()
@@ -126,10 +132,11 @@ class KinesisConsumer:
                 logger.debug(f'Acquiring shard iterator for {sid} after {mark}')
                 iterator = await self.get_shard_iterator_async(sid, ShardIteratorType.AFTER_SEQUENCE_NUMBER, mark)
             else:
-                logger.debug(f'Acquiring shard iterator for {sid} from beginning')
                 if self.from_earliest:
+                    logger.debug(f'Acquiring shard iterator for {sid} from beginning')
                     iterator = await self.get_shard_iterator_async(sid, ShardIteratorType.TRIM_HORIZON)
                 else:
+                    logger.debug(f'Acquiring shard iterator for {sid} from latest')
                     iterator = await self.get_shard_iterator_async(sid, ShardIteratorType.LATEST)
             shard_iters.append(iterator)
 

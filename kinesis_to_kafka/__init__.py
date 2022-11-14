@@ -21,13 +21,13 @@ class Config:
     KAFKA_BOOTSTRAP_SERVERS: str
     LOG_LEVEL: str = 'INFO'
     COMMIT_FOR_EVERY: int = 1024
-    FROM_EARLIEST: str = 'false'
+    FROM_EARLIEST: bool = False
 
 
 class StreamWorker:
     def __init__(self, config: Config) -> None:
         self.config = config
-        self.kinesis_client = KinesisConsumer(config.STREAM_NAME, config.CONSUMER_NAME, config.REDIS_URL, limit=2048, from_earliest=(config.FROM_EARLIEST == 'true'))
+        self.kinesis_client = KinesisConsumer(config.STREAM_NAME, config.CONSUMER_NAME, config.REDIS_URL, limit=2048, from_earliest=config.FROM_EARLIEST)
         self.kafka_producer = AIOKafkaProducer(
             bootstrap_servers=config.KAFKA_BOOTSTRAP_SERVERS,
             compression_type='gzip'
