@@ -119,6 +119,7 @@ class KinesisConsumer:
                     await anyio.sleep(self.interval)
             except Exception as e:
                 logger.error(f'Error while reading shard: {e}')
+                await self.send_stream.aclose()
                 tg.cancel_scope.cancel()
 
     async def get_iterator(self):

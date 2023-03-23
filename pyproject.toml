@@ -10,7 +10,7 @@ url = "http://mirror.kakao.com/pypi/simple/"
 default = true
 
 [tool.poetry.dependencies]
-python = "^3.9"
+python = "^3.10"
 httpx = "^0.22.0"
 anyio = "^3.5.0"
 dynaconf = "^3.1.7"
