@@ -11,10 +11,10 @@ tasks:
 
   build:
     cmds:
-      - docker build --platform linux/amd64 -t {{.IMAGE}}:latest .
+      - docker buildx build --platform linux/amd64,linux/arm64 -t {{.IMAGE}}:latest .
   
   push:
     deps: [build]
     cmds:
-      - docker push {{.IMAGE}}:latest 
+      - docker buildx build --push --platform linux/amd64,linux/arm64 -t {{.IMAGE}}:latest .
 
